@@ -88,13 +88,17 @@ program
   .option('--verbose', 'Exibe métricas detalhadas')
   .argument('<phrase>', 'Frase a ser analisada')
   .action(async (phrase, options) => {
+    const startTimeLoad = Date.now(); // Inicia o cronômetro para o tempo de carregamento dos parâmetros
     const depth = parseInt(options.depth);
     const hierarchy = await loadHierarchy();
-    
+    const endTimeLoad = Date.now(); // Finaliza o cronômetro para o tempo de carregamento dos parâmetros
+
     console.log('Frase:', phrase);
     console.log('Profundidade:', depth);
     
+    const startTimeVerification = Date.now(); // Inicia o cronômetro para o tempo de verificação da frase
     const foundWords = findWordsAtDepth(phrase, depth, hierarchy);
+    const endTimeVerification = Date.now(); // Finaliza o cronômetro para o tempo de verificação da frase
 
     if (Object.keys(foundWords).length > 0) {
       // Formatar o resultado para exibir como "palavra = contagem"
@@ -108,7 +112,8 @@ program
 
     if (options.verbose) {
       console.log('Modo verbose ativado');
-      console.log(`Tempo de carregamento dos parâmetros: (${new Date().getTime()}ms)`);
+      console.log(`Tempo de carregamento dos parâmetros: ${endTimeLoad - startTimeLoad}ms`);
+      console.log(`Tempo de verificação da frase: ${endTimeVerification - startTimeVerification}ms`);
     }
   });
 
