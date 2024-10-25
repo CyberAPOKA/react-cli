@@ -16,6 +16,28 @@ const loadHierarchy = async () => {
 const MAX_DEPTH = 4;
 
 /**
+ * Coleta todos os nomes dos grupos na hierarquia para serem excluídos da análise.
+ * 
+ * @param {any} node - O nó atual da hierarquia
+ * @returns {Set<string>} Um conjunto contendo todos os nomes dos grupos
+ */
+const collectGroupNames = (node: any): Set<string> => {
+  let groupNames = new Set<string>();
+
+  const traverse = (currentNode: any) => {
+    if (typeof currentNode === 'object' && !Array.isArray(currentNode)) {
+      Object.keys(currentNode).forEach(key => {
+        groupNames.add(key.toLowerCase()); // Adiciona o nome do grupo em minúsculas
+        traverse(currentNode[key]); // Continua percorrendo a hierarquia
+      });
+    }
+  };
+
+  traverse(node);
+  return groupNames;
+};
+
+/**
  * Encontra as palavras na frase que estão presentes na hierarquia de palavras
  * na profundidade especificada.
  *
@@ -25,32 +47,24 @@ const MAX_DEPTH = 4;
  * @returns {string[]} Um array com as palavras encontradas na frase na profundidade especificada
  */
 const findWordsAtDepth = (phrase: string, depth: number, hierarchy: any) => {
-
+  // Se a profundidade solicitada for maior que o nível máximo, retorne um objeto vazio
   if (depth > MAX_DEPTH) {
-    return {};
+    return {}; // Retorna um objeto vazio, indicando que não há palavras encontradas
   }
 
-  /**
-  * Converte todo o texto da frase para minusculas, afim de identificar palavras case-insensitive (tigres/Tigres/TIGRES/etc...).
-  * Também remove todos os tipos de pontuações, afim de identificar palavras em momentos como "Eu amo tigres, cavalos e gorilas."
-  */
+  // Coletar automaticamente os nomes dos grupos a serem excluídos
+  const groupNames = collectGroupNames(hierarchy);
+
   let wordCountsAndGroups: { [word: string]: { count: number, group: string } } = {};
   const sanitizedPhrase = phrase.toLowerCase().replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, '');
   const words = sanitizedPhrase.split(' ');
 
-  /**
-   * Função recursiva que percorre a hierarquia de palavras e verifica se as palavras
-   * da frase estão presentes na hierarquia na profundidade especificada.
-   *
-   * @param {any} node - O nó atual da hierarquia
-   * @param {number} currentDepth - A profundidade atual na hierarquia
-   * @returns {void}
-   */
   const searchHierarchy = (node: any, currentDepth: number, group: string) => {
     if (currentDepth === depth) {
       if (Array.isArray(node)) {
         words.forEach(word => {
-          if (node.map((w: string) => w.toLowerCase()).includes(word)) {
+          // Ignora palavras que estão na lista de nomes de grupos
+          if (!groupNames.has(word) && node.map((w: string) => w.toLowerCase()).includes(word)) {
             if (!wordCountsAndGroups[word]) {
               wordCountsAndGroups[word] = { count: 0, group: group };
             }
@@ -59,7 +73,7 @@ const findWordsAtDepth = (phrase: string, depth: number, hierarchy: any) => {
         });
       } else if (typeof node === 'object') {
         words.forEach(word => {
-          if (Object.keys(node).map((key: string) => key.toLowerCase()).includes(word)) {
+          if (!groupNames.has(word) && Object.keys(node).map((key: string) => key.toLowerCase()).includes(word)) {
             if (!wordCountsAndGroups[word]) {
               wordCountsAndGroups[word] = { count: 0, group: group };
             }
@@ -69,7 +83,7 @@ const findWordsAtDepth = (phrase: string, depth: number, hierarchy: any) => {
         Object.entries(node).forEach(([key, childNode]) => {
           if (Array.isArray(childNode)) {
             words.forEach(word => {
-              if (childNode.map((w: string) => w.toLowerCase()).includes(word)) {
+              if (!groupNames.has(word) && childNode.map((w: string) => w.toLowerCase()).includes(word)) {
                 if (!wordCountsAndGroups[word]) {
                   wordCountsAndGroups[word] = { count: 0, group: key };
                 }
@@ -88,7 +102,7 @@ const findWordsAtDepth = (phrase: string, depth: number, hierarchy: any) => {
     }
   };
 
-  searchHierarchy(hierarchy, 1, ''); // Começar a busca pela profundidade 1
+  searchHierarchy(hierarchy, 1, ''); // Começa a busca pela profundidade 1
   return wordCountsAndGroups; // Retorna o objeto com a contagem das palavras
 };
 
