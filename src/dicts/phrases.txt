@@ -1,0 +1,29 @@
+Nível 1 e 2:
+"Os animais mamíferos são muito fascinantes."
+"Eu gosto de estudar aves e mamíferos."
+
+Nível 2 e 3:
+"Os carnívoros felinos são predadores incríveis."
+"Herbívoros como os equídeos e bovídeos vivem em campos vastos."
+
+Nível 3 e 4:
+"Tigres e leões são dois dos maiores felinos carnívoros."
+"Os primatas como gorilas e chimpanzés são animais muito inteligentes."
+"Eu vi um búfalo e um antílope na savana africana."
+
+Vários níveis (1 a 4):
+"Os animais carnívoros, como os felinos, incluem tigres e jaguars."
+"Mamíferos, como os primatas e os bovídeos, são amplamente estudados na biologia."
+"Entre as aves, as rapinas, como águias e falcões, são predadores incríveis."
+
+Aves (Nível 3 e 4):
+"As rapinas são fascinantes, especialmente as águias e os falcões."
+"Papagaios e pardais são dois exemplos de pássaros que eu gosto."
+
+Múltiplos grupos (Nível 3 e 4):
+"Os herbívoros incluem equídeos como zebras e asnos, enquanto carnívoros incluem felinos como tigres e leopardos."
+"Os primatas, como orangotangos e gorilas, têm características incríveis."
+
+
+exemplo de uso:
+npm start -- --depth 2 "Eu amo tigres" --verbose
