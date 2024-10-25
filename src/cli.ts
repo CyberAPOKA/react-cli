@@ -29,7 +29,9 @@ const findWordsAtDepth = (phrase: string, depth: number, hierarchy: any) => {
    */
   const sanitizedPhrase = phrase.toLowerCase().replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, '');
   const words = sanitizedPhrase.split(' ');
-  let results: string[] = [];
+  
+  // Objeto para armazenar a contagem de ocorrências de cada palavra
+  let wordCounts: { [key: string]: number } = {};
 
   /**
    * Função recursiva que percorre a hierarquia de palavras e verifica se as palavras
@@ -46,14 +48,14 @@ const findWordsAtDepth = (phrase: string, depth: number, hierarchy: any) => {
         // Se o nó atual é um array, verifica se contém alguma das palavras
         words.forEach(word => {
           if (node.map((w: string) => w.toLowerCase()).includes(word)) {
-            results.push(word);
+            wordCounts[word] = (wordCounts[word] || 0) + 1; // Incrementa o contador
           }
         });
       } else if (typeof node === 'object') {
         // Se o nó é um objeto, verifica as chaves e valores
         words.forEach(word => {
           if (Object.keys(node).map((key: string) => key.toLowerCase()).includes(word)) {
-            results.push(word);  // Se a palavra é uma chave, adiciona ao resultado
+            wordCounts[word] = (wordCounts[word] || 0) + 1; // Incrementa o contador
           }
         });
         Object.values(node).forEach(childNode => {
@@ -61,7 +63,7 @@ const findWordsAtDepth = (phrase: string, depth: number, hierarchy: any) => {
             // Se encontrar um array, verifica as palavras no array
             words.forEach(word => {
               if (childNode.map((w: string) => w.toLowerCase()).includes(word)) {
-                results.push(word);
+                wordCounts[word] = (wordCounts[word] || 0) + 1; // Incrementa o contador
               }
             });
           }
@@ -78,9 +80,8 @@ const findWordsAtDepth = (phrase: string, depth: number, hierarchy: any) => {
   };
 
   searchHierarchy(hierarchy, 1); // Começar a busca pela profundidade 1
-  return results;
+  return wordCounts; // Retorna o objeto com a contagem das palavras
 };
-
 
 program
   .option('--depth <number>', 'Profundidade da hierarquia')
@@ -95,8 +96,12 @@ program
     
     const foundWords = findWordsAtDepth(phrase, depth, hierarchy);
 
-    if (foundWords.length > 0) {
-      console.log('Palavras encontradas:', foundWords.join(', '));
+    if (Object.keys(foundWords).length > 0) {
+      // Formatar o resultado para exibir como "palavra = contagem"
+      const resultString = Object.entries(foundWords)
+        .map(([word, count]) => `${word} = ${count}`)
+        .join('; ');
+      console.log('Palavras encontradas:', resultString);
     } else {
       console.log('Nenhuma palavra encontrada nesse nível de profundidade.');
     }
