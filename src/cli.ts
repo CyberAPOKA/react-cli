@@ -124,15 +124,20 @@ program
     const endTimeVerification = Date.now(); // Finaliza o cronômetro para o tempo de verificação da frase
 
     if (Object.keys(foundWordsAndGroups).length > 0) {
-      // Formata o resultado para exibir como "palavra = contagem"
       const resultString = Object.entries(foundWordsAndGroups)
         .map(([word, data]) => `${word} = ${data.count}`)
         .join('; ');
       console.log('Palavras encontradas:', resultString);
 
-      // Exibe o grupo correspondente
-      const groupString = Object.values(foundWordsAndGroups)
-        .map(data => `${data.group} = ${data.count}`)
+      // Agrupa as contagens por grupo
+      const groupCounts: { [group: string]: number } = {};
+      Object.values(foundWordsAndGroups).forEach(data => {
+        groupCounts[data.group] = (groupCounts[data.group] || 0) + data.count;
+      });
+
+      // Formata a saída do grupo
+      const groupString = Object.entries(groupCounts)
+        .map(([group, count]) => `${group} = ${count}`)
         .join('; ');
       console.log('Output:', groupString);
     } else {
