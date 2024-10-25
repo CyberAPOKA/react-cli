@@ -25,15 +25,17 @@ const loadHierarchy = async () => {
 const findWordsAtDepth = (phrase: string, depth: number, hierarchy: any) => {
   /**
    * Converte todo o texto da frase para minusculas, afim de identificar palavras case-insensitive (tigres/Tigres/TIGRES/etc...).
+   * Também remove todos os tipos de pontuações, afim de identificar palavras em momentos como "Eu amo tigres, cavalos e gorilas."
    */
-  const words = phrase.toLowerCase().split(' ');
+  const sanitizedPhrase = phrase.toLowerCase().replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, '');
+  const words = sanitizedPhrase.split(' ');
   let results: string[] = [];
 
   /**
-   * Fun o recursiva que percorre a hierarquia de palavras e verifica se as palavras
-   * da frase est o presentes na hierarquia na profundidade especificada.
+   * Função recursiva que percorre a hierarquia de palavras e verifica se as palavras
+   * da frase estão presentes na hierarquia na profundidade especificada.
    *
-   * @param {any} node - O nº atual da hierarquia
+   * @param {any} node - O nó atual da hierarquia
    * @param {number} currentDepth - A profundidade atual na hierarquia
    * @returns {void}
    */
