@@ -13,6 +13,8 @@ const loadHierarchy = async () => {
   return await fs.readJson(filePath);
 };
 
+const MAX_DEPTH = 4;
+
 /**
  * Encontra as palavras na frase que estão presentes na hierarquia de palavras
  * na profundidade especificada.
@@ -23,15 +25,18 @@ const loadHierarchy = async () => {
  * @returns {string[]} Um array com as palavras encontradas na frase na profundidade especificada
  */
 const findWordsAtDepth = (phrase: string, depth: number, hierarchy: any) => {
+
+  if (depth > MAX_DEPTH) {
+    return {};
+  }
+
   /**
-   * Converte todo o texto da frase para minusculas, afim de identificar palavras case-insensitive (tigres/Tigres/TIGRES/etc...).
-   * Também remove todos os tipos de pontuações, afim de identificar palavras em momentos como "Eu amo tigres, cavalos e gorilas."
-   */
+  * Converte todo o texto da frase para minusculas, afim de identificar palavras case-insensitive (tigres/Tigres/TIGRES/etc...).
+  * Também remove todos os tipos de pontuações, afim de identificar palavras em momentos como "Eu amo tigres, cavalos e gorilas."
+  */
+  let wordCountsAndGroups: { [word: string]: { count: number, group: string } } = {};
   const sanitizedPhrase = phrase.toLowerCase().replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, '');
   const words = sanitizedPhrase.split(' ');
-  
-  // Objeto para armazenar a contagem de ocorrências de cada palavra
-  let wordCounts: { [key: string]: number } = {};
 
   /**
    * Função recursiva que percorre a hierarquia de palavras e verifica se as palavras
@@ -41,46 +46,50 @@ const findWordsAtDepth = (phrase: string, depth: number, hierarchy: any) => {
    * @param {number} currentDepth - A profundidade atual na hierarquia
    * @returns {void}
    */
-  const searchHierarchy = (node: any, currentDepth: number) => {
+  const searchHierarchy = (node: any, currentDepth: number, group: string) => {
     if (currentDepth === depth) {
-      // Verifica se esta na profundidade correta
       if (Array.isArray(node)) {
-        // Se o nó atual é um array, verifica se contém alguma das palavras
         words.forEach(word => {
           if (node.map((w: string) => w.toLowerCase()).includes(word)) {
-            wordCounts[word] = (wordCounts[word] || 0) + 1; // Incrementa o contador
+            if (!wordCountsAndGroups[word]) {
+              wordCountsAndGroups[word] = { count: 0, group: group };
+            }
+            wordCountsAndGroups[word].count += 1;
           }
         });
       } else if (typeof node === 'object') {
-        // Se o nó é um objeto, verifica as chaves e valores
         words.forEach(word => {
           if (Object.keys(node).map((key: string) => key.toLowerCase()).includes(word)) {
-            wordCounts[word] = (wordCounts[word] || 0) + 1; // Incrementa o contador
+            if (!wordCountsAndGroups[word]) {
+              wordCountsAndGroups[word] = { count: 0, group: group };
+            }
+            wordCountsAndGroups[word].count += 1;
           }
         });
-        Object.values(node).forEach(childNode => {
+        Object.entries(node).forEach(([key, childNode]) => {
           if (Array.isArray(childNode)) {
-            // Se encontrar um array, verifica as palavras no array
             words.forEach(word => {
               if (childNode.map((w: string) => w.toLowerCase()).includes(word)) {
-                wordCounts[word] = (wordCounts[word] || 0) + 1; // Incrementa o contador
+                if (!wordCountsAndGroups[word]) {
+                  wordCountsAndGroups[word] = { count: 0, group: key };
+                }
+                wordCountsAndGroups[word].count += 1;
               }
             });
           }
         });
       }
     } else {
-      // Se ainda não chegou ao nível correto, continuar descendo a hierarquia
       if (typeof node === 'object') {
-        Object.values(node).forEach(childNode => {
-          searchHierarchy(childNode, currentDepth + 1);
+        Object.entries(node).forEach(([key, childNode]) => {
+          searchHierarchy(childNode, currentDepth + 1, key);
         });
       }
     }
   };
 
-  searchHierarchy(hierarchy, 1); // Começar a busca pela profundidade 1
-  return wordCounts; // Retorna o objeto com a contagem das palavras
+  searchHierarchy(hierarchy, 1, ''); // Começar a busca pela profundidade 1
+  return wordCountsAndGroups; // Retorna o objeto com a contagem das palavras
 };
 
 program
@@ -97,17 +106,23 @@ program
     console.log('Profundidade:', depth);
     
     const startTimeVerification = Date.now(); // Inicia o cronômetro para o tempo de verificação da frase
-    const foundWords = findWordsAtDepth(phrase, depth, hierarchy);
+    const foundWordsAndGroups = findWordsAtDepth(phrase, depth, hierarchy);
     const endTimeVerification = Date.now(); // Finaliza o cronômetro para o tempo de verificação da frase
 
-    if (Object.keys(foundWords).length > 0) {
-      // Formatar o resultado para exibir como "palavra = contagem"
-      const resultString = Object.entries(foundWords)
-        .map(([word, count]) => `${word} = ${count}`)
+    if (Object.keys(foundWordsAndGroups).length > 0) {
+      // Formata o resultado para exibir como "palavra = contagem"
+      const resultString = Object.entries(foundWordsAndGroups)
+        .map(([word, data]) => `${word} = ${data.count}`)
         .join('; ');
       console.log('Palavras encontradas:', resultString);
+
+      // Exibe o grupo correspondente
+      const groupString = Object.values(foundWordsAndGroups)
+        .map(data => `${data.group} = ${data.count}`)
+        .join('; ');
+      console.log('Output:', groupString);
     } else {
-      console.log('Nenhuma palavra encontrada nesse nível de profundidade.');
+      console.log('Output: 0');
     }
 
     if (options.verbose) {
